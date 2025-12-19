@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Walkthrough Creator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Clean Modern Design System */
+        :root {
+            --bg-color: #f3f4f6; /* Gray-100 */
+            --surface-color: #ffffff;
+            --text-main: #1f2937; /* Gray-800 */
+            --text-muted: #6b7280; /* Gray-500 */
+            --accent: #4f46e5; /* Indigo-600 */
+            --accent-hover: #4338ca; /* Indigo-700 */
+            --border-color: #e5e7eb; /* Gray-200 */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        /* Modern Card */
+        .modern-card {
+            background: var(--surface-color);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Modern Buttons */
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.15s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .btn-default {
+            background: white;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .btn-default:hover {
+            background-color: #f9fafb;
+            border-color: #d1d5db;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            border: 1px solid transparent;
+            color: white;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+        }
+
+        /* Inputs */
+        .modern-input {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            transition: all 0.2s;
+            outline: none;
+            color: var(--text-main);
+        }
+        
+        .modern-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        /* Selected Step State */
+        .step-item {
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .step-item.active {
+            background-color: #eef2ff; /* Indigo-50 */
+            border-color: #c7d2fe; /* Indigo-200 */
+        }
+
+        /* Progress Bar */
+        .progress-track {
+            background: #e5e7eb;
+            border-radius: 99px;
+            overflow: hidden;
+            height: 0.75rem;
+        }
+
+        .progress-fill {
+            background: var(--accent);
+            border-radius: 99px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 100%;
+        }
+
+        /* Animations */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(79, 70, 229, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+        }
+
+        .hotspot-ring {
+            animation: pulse-ring 2s infinite;
+            border-radius: 50%;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .shake-anim {
+            animation: shake 0.3s ease-in-out;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .tooltip-anim {
+            animation: pop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Scrollbar styling */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background-color: rgba(156, 163, 175, 0.5);
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- Header -->
+    <header class="h-16 flex items-center justify-between px-6 z-10 shrink-0 bg-white border-b border-gray-200">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
+                <i class="fa-solid fa-layer-group"></i>
+            </div>
+            <h1 class="text-lg font-bold tracking-tight text-gray-900">Walkthrough<span class="text-indigo-600">Creator</span></h1>
+        </div>
+        <div class="flex gap-3">
+            <button id="togglePreviewBtn" class="btn btn-default" onclick="togglePreview()">
+                <i class="fa-solid fa-play text-gray-500"></i> Preview
+            </button>
+            <button class="btn btn-primary" onclick="exportWalkthrough()">
+                <i class="fa-solid fa-download"></i> Export
+            </button>
+        </div>
+    </header>
+
+    <!-- EDITOR MODE -->
+    <div id="editorView" class="flex-1 flex overflow-hidden bg-gray-50 transition-opacity duration-300">
+        
+        <!-- Sidebar: Steps List -->
+        <aside class="w-80 bg-white border-r border-gray-200 flex flex-col shrink-0 z-10">
+            <div class="p-4 border-b border-gray-100">
+                <h2 class="text-xs font-semibold uppercase tracking-wider text-gray-400">Screens</h2>
+            </div>
+            
+            <div id="stepsList" class="flex-1 overflow-y-auto custom-scroll p-3 space-y-2">
+                <!-- Steps are injected here -->
+            </div>
+
+            <div class="p-4 border-t border-gray-200 bg-gray-50">
+                <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+                <button class="btn btn-default w-full justify-center py-2.5 bg-white" onclick="document.getElementById('imageInput').click()">
+                    <i class="fa-solid fa-plus text-indigo-500"></i> Add Screen
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Canvas: Editor -->
+        <main class="flex-1 flex flex-col min-w-0">
+            <!-- Toolbar -->
+            <div class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shrink-0 shadow-sm z-10">
+                <div class="flex items-center gap-4 w-full max-w-2xl">
+                    <span class="text-sm font-medium text-gray-500">Instruction:</span>
+                    <input type="text" id="captionInput" placeholder="e.g. Click the settings icon to continue..." 
+                           class="modern-input flex-1" oninput="updateCaption(this.value)">
+                </div>
+                <button class="w-8 h-8 flex items-center justify-center rounded-md hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors ml-4" title="Delete Step" onclick="deleteCurrentStep()">
+                    <i class="fa-solid fa-trash text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Image Area -->
+            <div class="flex-1 relative flex items-center justify-center overflow-hidden bg-gray-100 p-8">
+                <div id="editorImageContainer" class="relative max-w-full max-h-full shadow-xl rounded-xl transition-all duration-300 ring-1 ring-black/5 bg-white">
+                    <img id="currentImage" src="" class="max-w-full max-h-[70vh] object-contain rounded-xl select-none pointer-events-none block" draggable="false">
+                    
+                    <!-- The Hotspot Editor Overlay -->
+                    <div id="hotspotOverlay" class="absolute inset-0 cursor-crosshair" onclick="placeHotspot(event)">
+                        <!-- Active Hotspot Indicator -->
+                        <div id="editorHotspot" class="absolute w-12 h-12 border-2 border-indigo-500 bg-indigo-500/20 rounded-full shadow-sm transform -translate-x-1/2 -translate-y-1/2 hidden pointer-events-none transition-all">
+                            <div class="w-full h-full rounded-full animate-ping opacity-20 bg-indigo-500"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="emptyState" class="absolute inset-0 flex flex-col items-center justify-center text-gray-300">
+                        <i class="fa-regular fa-image text-5xl mb-3"></i>
+                        <p class="font-medium">No screen selected</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white border-t border-gray-200 py-2 text-center">
+                <p class="text-xs text-gray-400">Click on the image to place the target area.</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- PREVIEW MODE -->
+    <div id="previewView" class="hidden fixed inset-0 z-50 bg-gray-100 flex flex-col items-center justify-center p-4 sm:p-8">
+        
+        <div class="w-full max-w-4xl h-full flex flex-col relative">
+            
+            <!-- Progress Header -->
+            <div class="flex items-center gap-4 mb-6 shrink-0">
+                <button onclick="togglePreview()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 text-gray-500 transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="flex-1 progress-track">
+                    <div id="progressBar" class="progress-fill w-0"></div>
+                </div>
+                <span id="progressText" class="font-bold text-sm text-indigo-600">0%</span>
+            </div>
+
+            <!-- Game Container -->
+            <div id="gameContainer" class="flex-1 modern-card p-4 sm:p-8 relative flex items-center justify-center overflow-hidden bg-white">
+                
+                <!-- Game Image -->
+                <div class="relative inline-block shadow-lg rounded-lg overflow-hidden transition-transform" id="gameImageWrapper">
+                    <img id="gameImage" src="" class="max-w-full max-h-[75vh] object-contain block select-none" draggable="false">
+                    
+                    <!-- Interaction Layer -->
+                    <div id="gameInteractionLayer" class="absolute inset-0 cursor-pointer" onclick="handleGameClick(event)">
+                        <!-- The Hotspot (Hidden until clue triggered or debug) -->
+                        <div id="gameHotspot" class="absolute w-[10%] h-[10%] transform -translate-x-1/2 -translate-y-1/2 rounded-full"
+                             style="display: none;"> <!-- Position set via JS -->
+                             <div class="absolute inset-0 border-2 border-indigo-500 opacity-50 rounded-full hotspot-ring"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modern Caption Bubble -->
+                <div id="gameCaption" class="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-900/90 backdrop-blur-sm px-6 py-3 rounded-full shadow-xl max-w-[90%] text-center tooltip-anim z-10 pointer-events-none">
+                    <p class="text-base font-medium text-white"></p>
+                </div>
+
+                <!-- "Oops" Feedback -->
+                <div id="feedbackTooltip" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-500 text-white px-4 py-2 rounded-full shadow-lg opacity-0 pointer-events-none transition-opacity duration-300 font-bold z-20 text-sm">
+                    Oops! Not there.
+                </div>
+
+                <!-- Confetti Container -->
+                <canvas id="confettiCanvas" class="absolute inset-0 pointer-events-none z-30"></canvas>
+            </div>
+            
+            <!-- Complete Screen -->
+            <div id="completeScreen" class="hidden absolute inset-0 z-40 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center p-8 text-center rounded-xl">
+                <div class="w-20 h-20 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-3xl shadow-sm mb-6 tooltip-anim">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+                <h2 class="text-2xl font-bold mb-2 text-gray-900">Lesson Complete!</h2>
+                <p class="text-gray-500 mb-8">You've successfully built this workflow.</p>
+                <button onclick="togglePreview()" class="btn btn-primary px-8 py-3">
+                    Back to Editor
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- LOGIC -->
+    <script>
+        // --- State ---
+        let steps = [];
+        let currentStepIndex = 0;
+        let isPreviewing = false;
+        
+        // --- Editor Functions ---
+
+        async function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Compress/Resize logic
+            const base64 = await resizeAndCompressImage(file, 1000, 0.8);
+            
+            const newStep = {
+                id: Date.now(),
+                image: base64,
+                caption: "Click the highlighted area to continue.",
+                hotspot: { x: 50, y: 50 } // percent
+            };
+
+            steps.push(newStep);
+            currentStepIndex = steps.length - 1;
+            renderStepsList();
+            renderEditorCanvas();
+        }
+
+        function resizeAndCompressImage(file, maxWidth, quality) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > maxWidth) {
+                            height = height * (maxWidth / width);
+                            width = maxWidth;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    };
+                };
+            });
+        }
+
+        function renderStepsList() {
+            const container = document.getElementById('stepsList');
+            container.innerHTML = '';
+
+            steps.forEach((step, index) => {
+                const el = document.createElement('div');
+                const isActive = index === currentStepIndex;
+                el.className = `step-item flex items-center gap-3 w-full text-left p-2 rounded-lg cursor-pointer hover:bg-gray-50 ${isActive ? 'active' : 'bg-white border-transparent'}`;
+                el.onclick = () => { currentStepIndex = index; renderStepsList(); renderEditorCanvas(); };
+                
+                el.innerHTML = `
+                    <div class="w-12 h-12 rounded-md overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
+                        <img src="${step.image}" class="w-full h-full object-cover">
+                    </div>
+                    <div class="overflow-hidden flex-1">
+                        <p class="text-xs font-bold ${isActive ? 'text-indigo-600' : 'text-gray-500'}">Screen ${index + 1}</p>
+                        <p class="text-sm truncate text-gray-700">${step.caption}</p>
+                    </div>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        function renderEditorCanvas() {
+            const img = document.getElementById('currentImage');
+            const overlay = document.getElementById('hotspotOverlay');
+            const emptyState = document.getElementById('emptyState');
+            const hotspot = document.getElementById('editorHotspot');
+            const captionInput = document.getElementById('captionInput');
+
+            if (steps.length === 0) {
+                img.src = '';
+                img.classList.add('hidden');
+                overlay.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                captionInput.value = '';
+                captionInput.disabled = true;
+                return;
+            }
+
+            const step = steps[currentStepIndex];
+            img.src = step.image;
+            img.classList.remove('hidden');
+            overlay.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            captionInput.value = step.caption;
+            captionInput.disabled = false;
+
+            // Position Hotspot
+            hotspot.classList.remove('hidden');
+            hotspot.style.left = step.hotspot.x + '%';
+            hotspot.style.top = step.hotspot.y + '%';
+        }
+
+        function placeHotspot(event) {
+            if (steps.length === 0) return;
+            
+            const rect = event.currentTarget.getBoundingClientRect();
+            const x = ((event.clientX - rect.left) / rect.width) * 100;
+            const y = ((event.clientY - rect.top) / rect.height) * 100;
+
+            steps[currentStepIndex].hotspot = { x, y };
+            renderEditorCanvas();
+        }
+
+        function updateCaption(val) {
+            if (steps.length > 0) {
+                steps[currentStepIndex].caption = val;
+                renderStepsList(); // update sidebar preview
+            }
+        }
+
+        function deleteCurrentStep() {
+            if (steps.length === 0) return;
+            if(!confirm("Delete this screen?")) return;
+            
+            steps.splice(currentStepIndex, 1);
+            if (currentStepIndex >= steps.length) currentStepIndex = Math.max(0, steps.length - 1);
+            renderStepsList();
+            renderEditorCanvas();
+        }
+
+        // --- Preview / Game Logic ---
+
+        let gameIndex = 0;
+
+        function togglePreview() {
+            const editor = document.getElementById('editorView');
+            const preview = document.getElementById('previewView');
+            
+            isPreviewing = !isPreviewing;
+
+            if (isPreviewing) {
+                if(steps.length === 0) {
+                    alert("Add at least one screen to preview.");
+                    isPreviewing = false;
+                    return;
+                }
+                editor.classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => {
+                    editor.classList.add('hidden');
+                    preview.classList.remove('hidden');
+                    startPreviewGame();
+                }, 300);
+            } else {
+                preview.classList.add('hidden');
+                editor.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+            }
+        }
+
+        function startPreviewGame() {
+            gameIndex = 0;
+            document.getElementById('completeScreen').classList.add('hidden');
+            renderGameStep();
+        }
+
+        function renderGameStep() {
+            const step = steps[gameIndex];
+            const img = document.getElementById('gameImage');
+            const caption = document.querySelector('#gameCaption p');
+            const hotspot = document.getElementById('gameHotspot');
+            const progress = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+
+            img.src = step.image;
+            caption.innerText = step.caption;
+            
+            // Progress
+            const pct = Math.round((gameIndex / steps.length) * 100);
+            progress.style.width = pct + '%';
+            progressText.innerText = pct + '%';
+
+            // Position Hotspot
+            hotspot.style.left = step.hotspot.x + '%';
+            hotspot.style.top = step.hotspot.y + '%';
+            hotspot.style.display = 'block';
+        }
+
+        function handleGameClick(event) {
+            const rect = event.currentTarget.getBoundingClientRect();
+            const clickX = ((event.clientX - rect.left) / rect.width) * 100;
+            const clickY = ((event.clientY - rect.top) / rect.height) * 100;
+            
+            const step = steps[gameIndex];
+            
+            // Check distance (Hotspot radius approx 5-10%)
+            // Simple logic: within 8% distance of center x and y
+            const tolerance = 8; 
+            const dx = Math.abs(clickX - step.hotspot.x);
+            const dy = Math.abs(clickY - step.hotspot.y);
+
+            if (dx < tolerance && dy < tolerance) {
+                // Correct!
+                
+                // --- Fix: Calculate exact coordinate relative to confetti canvas ---
+                const canvas = document.getElementById('confettiCanvas');
+                const canvasRect = canvas.getBoundingClientRect();
+                // We use clientX/Y from event, subtract canvas position to get local X/Y
+                const confX = event.clientX - canvasRect.left;
+                const confY = event.clientY - canvasRect.top;
+                
+                triggerConfetti(confX, confY);
+                
+                if (gameIndex < steps.length - 1) {
+                    gameIndex++;
+                    setTimeout(renderGameStep, 400); // Slight delay for confetti
+                } else {
+                    // Finished
+                    document.getElementById('progressBar').style.width = '100%';
+                    document.getElementById('progressText').innerText = '100%';
+                    setTimeout(() => {
+                        document.getElementById('completeScreen').classList.remove('hidden');
+                    }, 500);
+                }
+            } else {
+                // Wrong!
+                const wrapper = document.getElementById('gameImageWrapper');
+                const feedback = document.getElementById('feedbackTooltip');
+                
+                // Shake effect
+                wrapper.classList.remove('shake-anim');
+                void wrapper.offsetWidth; // trigger reflow
+                wrapper.classList.add('shake-anim');
+
+                // Show "Oops"
+                feedback.style.left = clickX + '%';
+                feedback.style.top = clickY + '%';
+                feedback.style.opacity = 1;
+                setTimeout(() => feedback.style.opacity = 0, 1000);
+            }
+        }
+
+        // --- Export Logic ---
+
+        function exportWalkthrough() {
+            if (steps.length === 0) return alert("Nothing to export!");
+
+            const exportData = JSON.stringify(steps);
+
+            // Clean Modern Export Template
+            const playerHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Walkthrough</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f3f4f6; color: #1f2937; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; margin: 0; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; overflow: hidden; position: relative; }
+        .progress-track { background: #e5e7eb; border-radius: 99px; overflow: hidden; height: 10px; }
+        .progress-fill { background: #4f46e5; height: 100%; transition: width 0.5s; }
+        .hotspot-ring { animation: pulse-ring 2s infinite; border: 2px solid #4f46e5; border-radius: 50%; }
+        @keyframes pulse-ring { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(79, 70, 229, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        .shake-anim { animation: shake 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+    <div class="max-w-4xl mx-auto w-full h-full flex flex-col">
+        <!-- Header -->
+        <div class="flex items-center gap-4 mb-4 h-12 shrink-0">
+            <div class="flex-1 progress-track">
+                <div id="bar" class="progress-fill w-0"></div>
+            </div>
+            <span id="txt" class="font-bold text-sm text-indigo-600">0%</span>
+        </div>
+
+        <!-- Game Area -->
+        <div class="flex-1 card p-4 flex items-center justify-center bg-white relative">
+             <div class="relative inline-block rounded-lg transition-transform shadow-lg" id="wrapper">
+                <img id="img" src="" class="max-w-full max-h-[80vh] object-contain select-none block" draggable="false">
+                <div id="layer" class="absolute inset-0 cursor-pointer">
+                    <div id="spot" class="absolute w-[10%] h-[10%] transform -translate-x-1/2 -translate-y-1/2 rounded-full hidden">
+                        <div class="absolute inset-0 hotspot-ring opacity-50"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Caption -->
+            <div id="cap" class="absolute bottom-8 bg-gray-900/90 backdrop-blur-sm text-white px-6 py-3 rounded-full shadow-xl max-w-[90%] text-center pointer-events-none text-base font-medium"></div>
+
+            <!-- Feedback -->
+            <div id="fb" class="absolute bg-red-500 text-white px-4 py-2 rounded-full shadow-lg opacity-0 pointer-events-none transition-opacity font-bold z-20">Oops!</div>
+            
+            <!-- End Screen -->
+            <div id="end" class="hidden absolute inset-0 z-50 bg-white/95 flex flex-col items-center justify-center text-center">
+                <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-2xl mb-4"><i class="fa-solid fa-check"></i></div>
+                <h2 class="text-2xl font-bold mb-2">Complete!</h2>
+                <button onclick="location.reload()" class="mt-8 px-6 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">Replay</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const data = ${exportData};
+        let idx = 0;
+        
+        function render() {
+            const s = data[idx];
+            document.getElementById('img').src = s.image;
+            document.getElementById('cap').innerText = s.caption;
+            const pct = Math.round((idx / data.length) * 100);
+            document.getElementById('bar').style.width = pct + '%';
+            document.getElementById('txt').innerText = pct + '%';
+            
+            const spot = document.getElementById('spot');
+            spot.style.left = s.hotspot.x + '%';
+            spot.style.top = s.hotspot.y + '%';
+            spot.style.display = 'block';
+        }
+
+        document.getElementById('layer').onclick = (e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+            const s = data[idx];
+            
+            if (Math.abs(x - s.hotspot.x) < 8 && Math.abs(y - s.hotspot.y) < 8) {
+                if (idx < data.length - 1) {
+                    idx++;
+                    render();
+                } else {
+                    document.getElementById('bar').style.width = '100%';
+                    document.getElementById('txt').innerText = '100%';
+                    document.getElementById('end').classList.remove('hidden');
+                }
+            } else {
+                const w = document.getElementById('wrapper');
+                w.classList.remove('shake-anim');
+                void w.offsetWidth; 
+                w.classList.add('shake-anim');
+                
+                const fb = document.getElementById('fb');
+                fb.style.left = x + '%';
+                fb.style.top = y + '%';
+                fb.style.opacity = 1;
+                setTimeout(()=>fb.style.opacity=0, 800);
+            }
+        };
+        render();
+    <\/script>
+</body>
+</html>`;
+
+            const blob = new Blob([playerHtml], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'walkthrough.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // --- Improved Confetti with Origin ---
+        function triggerConfetti(originX, originY) {
+            const canvas = document.getElementById('confettiCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            const particles = [];
+            const colors = ['#4f46e5', '#818cf8', '#34d399', '#fbbf24', '#f87171'];
+            
+            for(let i=0; i<60; i++) {
+                particles.push({
+                    x: originX,
+                    y: originY,
+                    vx: (Math.random() - 0.5) * 12, // More spread
+                    vy: (Math.random() - 0.5) * 12,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    size: Math.random() * 6 + 3,
+                    drag: 0.95 // Air resistance
+                });
+            }
+            
+            let opacity = 1;
+            function animate() {
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                let active = false;
+                
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.4; // gravity
+                    p.vx *= p.drag;
+                    p.vy *= p.drag;
+                    
+                    if (p.y < canvas.height && opacity > 0) active = true;
+
+                    ctx.fillStyle = p.color;
+                    ctx.globalAlpha = opacity;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+                    ctx.fill();
+                });
+                
+                opacity -= 0.015;
+                if(opacity > 0 && active) requestAnimationFrame(animate);
+                else ctx.clearRect(0,0,canvas.width,canvas.height);
+            }
+            animate();
+        }
+    </script>
+</body>
+</html>
+
+
